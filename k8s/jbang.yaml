@@ -29,8 +29,9 @@ spec:
     env:
     - name: INPUT_SCRIPT
       value: '/scripts/GenerationalGCTest.java'
-    - name: INPUT_JBANGARGS
+    - name: INPUT_JBANGARGS_
       value: '-D=com.sun.management.jmxremote -D=com.sun.management.jmxremote.host=0.0.0.0 -D=com.sun.management.jmxremote.port=9010 -D=com.sun.management.jmxremote.local.only=false -D=com.sun.management.jmxremote.authenticate=false -D=com.sun.management.jmxremote.ssl=false --javaagent=io.prometheus.jmx:jmx_prometheus_javaagent:0.16.1=8081:/scripts/prometheus-exporter-config.yaml'
+      # this introduces too much noise. A lot of minor gc are being triggered.
     volumeMounts:
     - name: jbang-volume
       mountPath: /scripts/GenerationalGCTest.java
@@ -57,11 +58,12 @@ data:
     public class GenerationalGCTest {
       public static void main(String... args) throws Exception {
 
-        int size = (int)(1024*1024 * 0.9); // Almost 1KB
+        int size = (int)(1024 * 1024 * 0.9);
+        java.util.Random random = new java.util.Random();
 
         while( true ){
-          Thread.sleep( 10_000 );
-          new java.util.Random().nextBytes( new byte[size] );
+          Thread.sleep( 1_000 );
+          random.nextBytes( new byte[size] );
         }//while
 
       }//main
