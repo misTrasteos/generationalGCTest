@@ -10,6 +10,11 @@ spec:
     port: 8081
     targetPort: 8081
     protocol: TCP
+  - name: jbang-jmx
+    port: 9010
+    targetPort: 9010
+    protocol: TCP
+
 ---
 apiVersion: v1
 kind: Pod
@@ -20,18 +25,27 @@ metadata:
 spec:
   containers:
   - name: jbang
-    image: jbangdev/jbang-action:0.83.1
+    image: jbangdev/jbang-action:0.87.0
     imagePullPolicy: IfNotPresent
     ports:
     - name: jmx-exporter
       containerPort: 8081
       protocol: TCP
+    - name: jbang-jmx
+      containerPort: 9010
+      protocol: TCP
     env:
     - name: INPUT_SCRIPT
       value: '/scripts/GenerationalGCTest.java'
-    - name: INPUT_JBANGARGS_
-      value: '-D=com.sun.management.jmxremote -D=com.sun.management.jmxremote.host=0.0.0.0 -D=com.sun.management.jmxremote.port=9010 -D=com.sun.management.jmxremote.local.only=false -D=com.sun.management.jmxremote.authenticate=false -D=com.sun.management.jmxremote.ssl=false --javaagent=io.prometheus.jmx:jmx_prometheus_javaagent:0.16.1=8081:/scripts/prometheus-exporter-config.yaml'
-      # this introduces too much noise. A lot of minor gc are being triggered.
+    - name: INPUT_JBANGARGS
+      value: >-
+        -D=com.sun.management.jmxremote 
+        -D=com.sun.management.jmxremote.host=0.0.0.0
+        -D=com.sun.management.jmxremote.port=9010
+        -D=com.sun.management.jmxremote.local.only=false
+        -D=com.sun.management.jmxremote.authenticate=false
+        -D=com.sun.management.jmxremote.ssl=false
+        --javaagent=io.prometheus.jmx:jmx_prometheus_javaagent:0.16.1=8081:/scripts/prometheus-exporter-config.yaml
     volumeMounts:
     - name: jbang-volume
       mountPath: /scripts/GenerationalGCTest.java
@@ -42,7 +56,7 @@ spec:
   volumes:
   - name: jbang-volume
     configMap:
-      name: jbang-cm          
+      name: jbang-cm
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -50,21 +64,23 @@ metadata:
   name: jbang-cm
 data:
   GenerationalGCTest.java: |-
+    //JAVA_OPTIONS -Xint
     //JAVA_OPTIONS -XX:+UseSerialGC -Xlog:gc*
     //JAVA_OPTIONS -XX:-UseAdaptiveSizePolicy
-    //JAVA_OPTIONS -Xms64m -Xmx64m 
-    //JAVA_OPTIONS -XX:NewSize=10m -XX:SurvivorRatio=3
+    //JAVA_OPTIONS -Xms8m -Xmx8m 
+    //JAVA_OPTIONS -Xmn3m
 
     public class GenerationalGCTest {
+
+      static class MyObject{
+        double a;
+      }
+
       public static void main(String... args) throws Exception {
-
-        int size = (int)(1024 * 1024 * 0.9);
-        java.util.Random random = new java.util.Random();
-
-        while( true ){
-          Thread.sleep( 1_000 );
-          random.nextBytes( new byte[size] );
-        }//while
+        while( args.length > -1 ){
+          Thread.sleep(1_000);
+          new MyObject();
+        }
 
       }//main
 

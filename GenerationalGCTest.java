@@ -1,4 +1,5 @@
-//JAVA_OPTIONS -XX:+UseSerialGC -Xlog:gc*
+//JAVA_OPTIONS -XX:+UseSerialGC
+//JAVA_OPTIONS -XX:+PrintGCDetails
 //JAVA_OPTIONS -XX:-UseAdaptiveSizePolicy
 //JAVA_OPTIONS -Xms32m -Xmx32m 
 //JAVA_OPTIONS -XX:NewSize=10m -XX:SurvivorRatio=3

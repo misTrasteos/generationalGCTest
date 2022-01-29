@@ -15,3 +15,9 @@ portForward:
 - resourceType: service
   resourceName: grafana-service
   port: 3000
+- resourceType: service
+  resourceName: jbang-service
+  port: 9010
+- resourceType: service
+  resourceName: jbang-service
+  port: 8081
